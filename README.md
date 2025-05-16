@@ -3,7 +3,7 @@ Franka Emika Panda robot arm, ROS2 Jazzy control, Gazebo Simulation, MoveIt conf
 
 install this package:
 
-in you workspace directory
+open terminal in you workspace directory
 
 git clone https://github.com/heinrich35/ros2_panda_gazebo.git
 
