@@ -1,0 +1,113 @@
+
+controller_manager:
+  ros__parameters:
+    update_rate: 50
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+      state_publish_rate: 50
+
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    panda_gripper:
+      type: position_controllers/JointGroupPositionController
+
+arm_controller:
+  ros__parameters:
+    joints:
+      - panda_joint1
+      - panda_joint2
+      - panda_joint3
+      - panda_joint4
+      - panda_joint5
+      - panda_joint6
+      - panda_joint7
+
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+
+    state_publish_rate:   50.0
+    goal_time:            0.5
+    action_monitor_rate:  10.0
+
+    constraints:
+      stopped_velocity_tolerance: 0.00
+      goal_time:                 0.1
+
+    gains:
+      panda_joint1: {p: 80.0, i: 0.0, d: 10.0, ff_vel: 1.0, ff_accel: 0.2}
+      panda_joint2: {p: 80.0, i: 0.0, d: 10.0, ff_vel: 1.0, ff_accel: 0.2}
+      panda_joint3: {p: 80.0, i: 0.0, d: 10.0, ff_vel: 1.0, ff_accel: 0.2}
+      panda_joint4: {p: 80.0, i: 0.0, d: 10.0, ff_vel: 1.0, ff_accel: 0.2}
+      panda_joint5: {p: 80.0, i: 0.0, d: 10.0, ff_vel: 1.0, ff_accel: 0.2}
+      panda_joint6: {p: 80.0, i: 0.0, d: 10.0, ff_vel: 1.0, ff_accel: 0.2}
+      panda_joint7: {p: 80.0, i: 0.0, d: 10.0, ff_vel: 1.0, ff_accel: 0.2}
+
+    filters:
+      panda_joint1:
+        velocity:
+          type: low_pass
+          cutoff_frequency: 1.0
+        acceleration:
+          type: low_pass
+          cutoff_frequency: 1.0
+      panda_joint2:
+        velocity:
+          type: low_pass
+          cutoff_frequency: 1.0
+        acceleration:
+          type: low_pass
+          cutoff_frequency: 1.0
+      panda_joint3:
+        velocity:
+          type: low_pass
+          cutoff_frequency: 1.0
+        acceleration:
+          type: low_pass
+          cutoff_frequency: 1.0
+      panda_joint4:
+        velocity:
+          type: low_pass
+          cutoff_frequency: 1.0
+        acceleration:
+          type: low_pass
+          cutoff_frequency: 1.0
+      panda_joint5:
+        velocity:
+          type: low_pass
+          cutoff_frequency: 1.0
+        acceleration:
+          type: low_pass
+          cutoff_frequency: 1.0
+      panda_joint6:
+        velocity:
+          type: low_pass
+          cutoff_frequency: 1.0
+        acceleration:
+          type: low_pass
+          cutoff_frequency: 1.0
+      panda_joint7:
+        velocity:
+          type: low_pass
+          cutoff_frequency: 1.0
+        acceleration:
+          type: low_pass
+          cutoff_frequency: 1.0
+
+panda_gripper:
+  ros__parameters:
+    joints:
+      - panda_finger_joint1
+      - panda_finger_joint2
+    interface_name: position
+    update_rate: 50
+    use_sim_time: true
+
+    gains:
+      panda_finger_joint1: {p: 500.0, d: 10.0}
+      panda_finger_joint2: {p: 500.0, d: 10.0}

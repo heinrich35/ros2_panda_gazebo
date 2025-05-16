@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Launch-time args for sim time, gripper, controllers, and feed-forward -->
+  <xacro:arg name="use_sim_time" default="false"/>
+  <xacro:arg name="load_gripper" default="false"/>
+  <xacro:arg name="simulation_controllers_config_file" default=""/>
+  <xacro:arg name="ff_vel" default="1.0"/>
+  <xacro:arg name="ff_accel" default="0.2"/>
+
+  <!-- Per-joint PID gains -->
+  <xacro:property name="pos_kp" value="80.0"/>
+  <xacro:property name="pos_ki" value="0.0"/>
+  <xacro:property name="pos_kd" value="120.0"/>
+  <xacro:property name="pos_max_integral_error" value="1000.0"/>
+
+  <!-- Macros for joints -->
+  <xacro:macro name="panda_joint" params="ns jname jmin jmax">
+    <joint name="${ns}_${jname}">
+      <param name="initial_position">0.0</param>
+      <param name="pos_kp">${pos_kp}</param>
+      <param name="pos_ki">${pos_ki}</param>
+      <param name="pos_kd">${pos_kd}</param>
+      <param name="pos_max_integral_error">${pos_max_integral_error}</param>
+      <!-- feed-forward terms -->
+      <param name="ff_vel">${ff_vel}</param>
+      <param name="ff_accel">${ff_accel}</param>
+      <command_interface name="position">
+        <param name="min">${jmin}</param>
+        <param name="max">${jmax}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="finger_joint" params="jname">
+    <joint name="${jname}">
+      <param name="initial_position">0.0</param>
+      <param name="pos_kp">${pos_kp}</param>
+      <param name="pos_ki">${pos_ki}</param>
+      <param name="pos_kd">${pos_kd}</param>
+      <param name="pos_max_integral_error">${pos_max_integral_error}</param>
+      <!-- feed-forward terms -->
+      <param name="ff_vel">${ff_vel}</param>
+      <param name="ff_accel">${ff_accel}</param>
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">0.04</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Main ros2_control macro -->
+  <xacro:macro name="panda_arm_ros2_control"
+               params="ns use_sim_time load_gripper simulation_controllers_config_file ff_vel ff_accel">
+
+    <!-- Resolve controller YAML path -->
+  <xacro:property name="controllers_yaml_path"
+    value="${(simulation_controllers_config_file != '') and simulation_controllers_config_file
+           or 'package://panda_gazebo/config/gazebo_panda_controllers.yaml'}"/>
+
+    <ros2_control name="RobotSystem" type="system">
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+      <!-- Arm joints -->
+      <xacro:panda_joint ns="${ns}" jname="joint1" jmin="-2.8973" jmax="2.8973"/>
+      <xacro:panda_joint ns="${ns}" jname="joint2" jmin="-1.7628" jmax="1.7628"/>
+      <xacro:panda_joint ns="${ns}" jname="joint3" jmin="-2.8973" jmax="2.8973"/>
+      <xacro:panda_joint ns="${ns}" jname="joint4" jmin="-3.0718" jmax="-0.0698"/>
+      <xacro:panda_joint ns="${ns}" jname="joint5" jmin="-2.8973" jmax="2.8973"/>
+      <xacro:panda_joint ns="${ns}" jname="joint6" jmin="-0.0175" jmax="3.7525"/>
+      <xacro:panda_joint ns="${ns}" jname="joint7" jmin="-2.8973" jmax="2.8973"/>
+    </ros2_control>
+
+    <xacro:if value="${load_gripper}">
+      <ros2_control name="HandSystem" type="system">
+        <hardware>
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </hardware>
+        <xacro:finger_joint jname="panda_finger_joint1"/>
+        <xacro:finger_joint jname="panda_finger_joint2"/>
+      </ros2_control>
+    </xacro:if>
+
+    <gazebo>
+      <plugin filename="libgz_ros2_control-system.so"
+              name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>${controllers_yaml_path}</parameters>
+        <position_proportional_gain>0.5</position_proportional_gain>
+      </plugin>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

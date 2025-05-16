@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="panda">
+
+  <!-- Include ros2_control definitions (must come before args) -->
+  <xacro:include filename="$(find panda_description)/robots/ros2_control/panda_arm.ros2_control.xacro"/>
+
+  <!-- Launch-time arguments ──────────────────────────────────────────────── -->
+  <xacro:arg name="arm_id"                         default="panda"/>
+  <xacro:arg name="hand"                           default="false"/>
+  <xacro:arg name="robot_ip"                       default=""/>
+  <xacro:arg name="use_fake_hardware"              default="false"/>
+  <xacro:arg name="fake_sensor_commands"           default="false"/>
+  <xacro:arg name="use_sim_time"                   default="false"/>
+  <!-- path to your controllers YAML (if not overridden) -->
+  <xacro:arg name="simulation_controllers_config_file"
+             default="$(find panda_gazebo)/config/gazebo_panda_controllers.yaml"/>
+  <!-- feed-forward gains -->
+  <xacro:arg name="ff_vel"                          default="1.0"/>
+  <xacro:arg name="ff_accel"                        default="0.2"/>
+
+  <!-- World → base frame ─────────────────────────────────────────────────── -->
+  <link name="world"/>
+  <joint name="fixed_frame" type="fixed">
+    <origin xyz="0 0 0.125" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child  link="cylinder_base"/>
+  </joint>
+
+  <!-- Base pedestal ───────────────────────────────────────────────────────── -->
+<link name="cylinder_base">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <cylinder radius="0.25" length="0.25"/>
+    </geometry>
+    <material name="amber">
+      <color rgba="0.996 0.702 0.031 1.0"/>
+    </material>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <cylinder radius="0.25" length="0.25"/>
+    </geometry>
+  </collision>
+  <inertial>
+    <mass value="10"/>
+    <!-- <inertial> → should be <inertia> -->
+    <inertia 
+      ixx="0.3646" ixy="0" ixz="0"
+      iyy="0.3646" iyz="0"
+      izz="0.3125"/>
+  </inertial>
+</link>
+
+
+  <!-- Panda arm kinematics & visuals ──────────────────────────────────────── -->
+  <xacro:include filename="$(find panda_description)/robots/panda_arm.xacro"/>
+  <xacro:panda_arm
+      arm_id="$(arg arm_id)"
+      connected_to="cylinder_base"
+      xyz="0 0 0.125"
+      safety_distance="0.03"
+      use_sim_time="$(arg use_sim_time)"/>
+
+  <!-- Optional hand (gripper) ────────────────────────────────────────────── -->
+  <xacro:if value="$(arg hand)">
+    <xacro:include filename="$(find panda_description)/robots/hand.xacro"/>
+    <xacro:hand
+        ns="$(arg arm_id)"
+        connected_to="$(arg arm_id)_link8"
+        rpy="0 0 ${-pi/4}"
+        xyz="0 0 0"
+        safety_distance="0.03"
+        use_sim_time="$(arg use_sim_time)"
+        simulation_controllers_config_file="$(arg simulation_controllers_config_file)"/>
+  </xacro:if>
+
+  <!-- Arm ros2_control + feed-forward instantiation ───────────────────────── -->
+  <xacro:panda_arm_ros2_control
+      ns="$(arg arm_id)"
+      use_sim_time="$(arg use_sim_time)"
+      load_gripper="$(arg hand)"
+      simulation_controllers_config_file="$(arg simulation_controllers_config_file)"
+      ff_vel="$(arg ff_vel)"
+      ff_accel="$(arg ff_accel)"/>
+
+  <!-- Gazebo joint-trajectory-controller plugin (if still needed) ─────────── -->
+  <plugin filename="libgz-sim-joint-trajectory-controller-system.so"
+          name="gz::sim::systems::JointTrajectoryController">
+    <!-- list each of your 7 joints -->
+    <joint_name>panda_joint1</joint_name>
+    <joint_name>panda_joint2</joint_name>
+    <joint_name>panda_joint3</joint_name>
+    <joint_name>panda_joint4</joint_name>
+    <joint_name>panda_joint5</joint_name>
+    <joint_name>panda_joint6</joint_name>
+    <joint_name>panda_joint7</joint_name>
+
+    <!-- per-joint P gains (example values) -->
+    <position_p_gain>100</position_p_gain>
+    <position_p_gain>100</position_p_gain>
+    <position_p_gain>100</position_p_gain>
+    <position_p_gain>100</position_p_gain>
+    <position_p_gain>100</position_p_gain>
+    <position_p_gain>100</position_p_gain>
+    <position_p_gain>100</position_p_gain>
+  </plugin>
+
+</robot>
